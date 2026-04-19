@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ' *)",
+      "Bash(python3 calibrate_datasets.py)",
+      "Bash(python3 -m jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=300 Weis_LMS_EDA.ipynb)",
+      "Bash(python3 -m jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=300 Weis_Revenue_EDA.ipynb)",
+      "Bash(python3 -m jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=300 Weis_Correlation_Analysis.ipynb)",
+      "Bash(python3 -m nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=300 Weis_Correlation_Analysis.ipynb)"
+    ]
+  }
+}
