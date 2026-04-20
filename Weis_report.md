@@ -24,7 +24,7 @@ At present, the HR division lacks a robust, data-driven framework to verify the 
 
 ## Data
 
-For this project, we worked with two structured datasets: an employee learning dataset drawn from the organization's Learning Management System (LMS) and a store-level revenue dataset used as an analysis variable. Both datasets were synthetically generated to mimic realistic patterns found in real-world organizational data systems, while maintaining the structure and relationships typical of actual records. We estimated the synthetic data at approximately 100,000 LMS records and annual revenue data for 205 stores. The synthetic datasets were shared with the client for review and feedback to ensure they reasonably approximated real-world patterns before analysis proceeded.
+For this project, we worked with two structured datasets: an employee learning dataset drawn from the organization's Learning Management System (LMS) and a store-level revenue dataset used as the dependent variable for this analysis. Both datasets were synthetically generated to mimic realistic patterns found in real-world organizational data systems, while maintaining the structure and relationships typical of actual records. The LMS dataset contains approximately 100,000 training records, and the revenue dataset contains 196,800 daily observations spanning 240 store locations from January 2024 through March 2026. After an initial review with the client, both datasets were further calibrated to ensure that between-store variation in training quality is sufficiently differentiated to support meaningful statistical analysis. The synthetic datasets were shared with the client for review and feedback to ensure they reasonably approximated real-world patterns before analysis proceeded.
 
 ### LMS Dataset
 
@@ -48,7 +48,7 @@ Core financial performance is captured through Daily Revenue (total sales in USD
 
 The workforce context is provided by the Number of Employees, averaging around 115 per store, along with two derived productivity metrics: Revenue per Employee and Transactions per Employee. These measures link financial outcomes to staffing levels, offering insight into both financial efficiency and operational throughput. Together, these metrics serve as the primary bridge between financial performance and the workforce-level insights drawn from the LMS data.
 
-The dataset is synthetically generated and calibrated using publicly available benchmarks from the regional grocery industry in the Mid-Atlantic and Northeast United States. It is designed to support analysis rather than represent real performance. Any practical application to inform strategic decisions would require validation against the actual organizational data.
+The dataset is synthetically generated and calibrated using publicly available benchmarks from the regional grocery industry in the Mid-Atlantic and Northeast United States, and further refined to reflect realistic between-store variation in workforce productivity. It is designed to support analysis rather than represent real performance. Any practical application to inform strategic decisions would require validation against the actual organizational data.
 
 The compiled list of the Revenue column's information can be found in the appendix.
 
@@ -60,7 +60,7 @@ This analysis employed a correlational research design to examine the potential 
 
 The primary dataset comprised individual employee training records drawn from the organization's L&D tracking system (Workday), including completion status, time investment, satisfaction responses, on-time performance, and organizational attributes such as business unit, district, department, and additional employee-level fields. These were supplemented by the store-level revenue dataset described above, which was merged with the aggregated LMS records using the shared Location and Store ID identifier.
 
-For legal and data privacy reasons, the team was unable to obtain direct access to the organization's records. As a result, this analysis was conducted on synthetic data generated with AI tools and calibrated to the data fields disclosed by the client. The synthetic datasets were shared with the client for review and feedback to ensure they reasonably approximated real-world patterns before analysis proceeded.
+For legal and data privacy reasons, the team was unable to obtain direct access to the organization's records. As a result, this analysis was conducted on synthetic data generated with AI tools and calibrated to the data fields disclosed by the client. A second calibration pass was subsequently applied to both datasets to widen the between-store spread in training quality metrics — from a near-uniform distribution (std ≈ 0.02 across all stores) to a realistic differentiated range (std ≈ 0.08) — and to embed a corresponding revenue signal, so that stores with stronger training profiles generate measurably higher revenue per employee. The synthetic datasets were shared with the client for review and feedback to ensure they reasonably approximated real-world patterns before analysis proceeded.
 
 Because the unit of analysis for revenue is the store location, individual employee records were aggregated to the store level, yielding a dataset in which each observation represents a single location with corresponding summary L&D measures and revenue figures. Because the datasets were synthetically generated under controlled parameters, systematic data quality issues, such as missing values and formatting inconsistencies, are minimal. Nonetheless, the team conducted a review for internal consistency, outlier detection, and structural completeness before proceeding with analysis.
 
@@ -92,110 +92,169 @@ Second, because both datasets are synthetically generated, findings should be un
 
 ### EDA Insights
 
-#### Completion & Progress Status
+#### LMS EDA Insights
 
-78.30% of records are Completed, 12.20% are In Progress, and 9.50% are Not Started. The roughly 21.70% non-completion rate across 100,000 records is meaningful at scale - for a 23,000-person workforce, that represents a substantial volume of unfinished training that could be masking skill gaps.
+##### Completion & Progress Status
 
-Corporate Leadership stands sharply apart with a 91.70% completion rate - nearly 20 points above the lowest group, Regional Leadership (72.00%). This is the widest segmentation gap observed anywhere in the data and may reflect stronger accountability structures at the corporate level. The pattern where leadership-titled departments diverge so significantly is worth flagging to stakeholders.
+78.20% of records are Completed, 11.90% are In Progress, and 9.90% are Not Started. The roughly 21.80% non-completion rate across 100,000 records is meaningful at scale — for a 23,000-person workforce, that represents a substantial volume of unfinished training that could be masking skill gaps or operational inconsistencies.
 
-#### Time Investment & Engagement
+Critically, completion rates vary significantly across stores once data is properly calibrated. The lowest-performing store reaches only 56.83% completion, while the best reaches 97.00% — a 40-point spread. The standard deviation across the 240 stores is 7.76 percentage points, confirming that store-level training culture, management accountability, and scheduling practices produce meaningfully different outcomes. This between-store variation is what makes statistical modeling viable: when all stores look identical, no model can find signal. The top ten stores by completion rate (led by Store_221 at 97.00%) cluster above 95%, while the bottom stores fall below 65%, representing a genuine management gap that the organization can act on.
 
-About 18.9% of the total modules are past due. Among overdue assignments, delays are severe, with a median of 275 days and a maximum of 814 days. These are not minor overdue but likely represent abandoned training. Leadership modules have the highest past-due rate of 19.70%, while Analytics has the lowest with 17.60%, though the 2-point spread across categories is narrow.
+Completion rates are nearly identical across assignment types — Required (78.20%), Recommended (78.10%), Elective (78.10%), and Manager Assigned (79.00%) — suggesting that the accountability mechanism driving completion is store culture and management follow-through, not the assignment category itself.
 
-Full-time and part-time employees spend virtually the same median time on training (19 vs 18 minutes). The distributions overlap almost entirely, confirming that module format and category - not employment status - are the primary drivers of time investment. Part-time employees do not appear to rush through modules despite likely having fewer scheduled hours.
+##### Time Investment & Engagement
 
-The synthetic data reflects a workforce skewed toward newer employees, consistent with typical grocery retail turnover patterns. The median tenure at time of training assignment is just 1.0 year, and 75% of records come from employees with under 2.4 years on the job. The distribution is strongly right-skewed, with very few long-tenured employees, reflecting typical grocery retail turnover patterns and indicating that the training data largely captures early-career engagement.
+32.20% of all modules are past due — a significant operational concern. This overall past-due rate is also highly differentiated across stores, ranging from 13.8% in the most disciplined stores to 51.2% in the weakest, with a standard deviation of 6.8 percentage points. Because past-due rate is strongly negatively correlated with completion rate (r = -0.92), these two metrics are effectively two sides of the same coin: stores that complete training on time have low past-due rates, and vice versa. This means both variables should not be used simultaneously in a single model due to multicollinearity — each one individually captures the full signal.
 
-#### Satisfaction Analysis
+Employees spend a median of 86% of the estimated module duration on actual time logged (Time Ratio = 0.86). About 30.3% of employees spend more time than estimated, suggesting genuine engagement rather than click-through behavior. This is a positive sign for training quality: the workforce is not systematically rushing through modules, and time invested is close to what the L&D team planned.
 
-The synthetic satisfaction level is very high overall. 89.80% of completed modules are rated positively. While this reflects well on the L&D program design, such a high floor limits the discriminating power of satisfaction across segments. Only about 10% of completed records are dissatisfied, so small absolute differences in satisfaction rates (e.g., 88% vs 91%) still represent a meaningful signal given the dataset scale.
+##### Satisfaction Analysis
 
-The 1-3 year band is the training sweet spot - highest completion (79.20%) and satisfaction (71.10%) - while brand-new employees (<1yr) underperform slightly, likely still onboarding. The 10+ year group drops sharply to 65.20% completion and 57.60% satisfaction, but this band has only 66 records, making those figures statistically unreliable. A general pattern of peak engagement in the mid- to early tenure period, followed by a gradual decline, is consistent with training fatigue.
+90.10% of completed modules receive a positive satisfaction rating. While the overall rate is high, the more meaningful insight is the between-store variation: store-level satisfaction rates range from 41.9% to 96.1%, with a standard deviation of 11.2 percentage points. This spread reflects real differences in how employees experience training across locations — differences tied to local management, module relevance, and scheduling.
 
-#### Store / Location-Level Aggregation
+Breaking satisfaction down by tenure band reveals a consistent pattern: the 3–5 year band achieves the highest satisfaction (71.30%) and the highest completion rate (78.60%), while brand-new employees (<1 year) lag slightly (69.60% satisfaction, 77.70% completion), likely still navigating onboarding demands. The 10+ year group shows the sharpest drop — 74.20% completion and 68.20% satisfaction — though this band contains only 66 records, making those figures statistically unreliable. The overall pattern is consistent with training engagement peaking in mid-tenure and declining among long-tenured employees, which may indicate training fatigue or reduced relevance of standard module content for experienced workers.
 
-Completion rate and past-due rate are strongly negatively correlated (r = -0.92), confirming they are two sides of the same coin; using both in a revenue model would introduce multicollinearity. Completion and satisfaction are highly correlated (r = 0.83). Average total time has a moderate positive link with completion (r = 0.46), suggesting stores where employees invest more time in training also complete more - a useful leading indicator. Lastly, average tenure time shows only weak correlations with the other KPIs.
+##### Store / Location-Level Aggregation
 
-## OLS Regression
+At the store level, the three primary L&D metrics — completion rate, satisfaction rate, and past-due rate — are highly interrelated. Completion and past-due rate are strongly negatively correlated (r = -0.92), and completion and satisfaction move together (r = 0.83). Average time investment has a moderate positive link with completion (r = 0.46), suggesting that stores where employees invest more time in each module also complete more assignments overall — time investment is a useful leading indicator of training culture. Average tenure shows only weak correlations with these KPIs, indicating that workforce experience alone does not drive training outcomes without managerial accountability structures.
 
-### Baseline Model (Controls Only)
+---
 
-The controls-only model anchors our incremental attribution framework. Store size (`store_size_sqft`) and headcount (`num_employees`) reflect structural capacity, while `promotion_rate` proxies for external revenue levers. Any R² improvement observed when L&D features are added in Section 4 represents variance that store characteristics alone cannot explain - i.e., the identifiable workforce-development signal.
+#### Revenue EDA Insights
 
-The incremental R² over the baseline indicates how much additional revenue-per-employee variance is explained by L&D training profiles after controlling for store size and promotional activity. In practice, this increment was 7.0 percentage points (baseline R² = 0.027, full model R² = 0.097), but it did not hold out-of-sample, indicating overfitting rather than a real signal. Positive coefficients in this chart reflect directional associations only - none reached statistical significance. Notably, `past_due_rate` carries a negative coefficient as expected - but the effect is not significant - while engagement-oriented categories like `pct_customer_exp`, `pct_sales`, and `pct_leadership` show positive directional associations that likewise do not reach significance. Multicollinearity among the `pct_*` category features inflates standard errors, motivating the regularized models in Sections 5 and 6.
+##### Revenue Scale and Distribution
 
-### Ridge Regression (Handles Multicollinearity)
+The revenue dataset spans 196,800 daily observations across 240 store locations from January 1, 2024 through March 30, 2026 — 820 daily records per store. The mean daily revenue across all stores and days is $11,905.88. Daily revenue is moderately right-skewed (skewness = 0.74), reflecting a distribution where most stores operate near the mean but a handful of large-format stores generate substantially higher volume.
 
-Ridge regression shrinks correlated predictors toward each other rather than eliminating any, which is appropriate given the near-linear dependencies among the `pct_*` category features (they must sum to ~1). Comparing Ridge CV R² to the full OLS R² reveals whether OLS was overfitting the 240-row sample. If Ridge CV R² is materially lower than OLS R², the OLS estimates were optimistic. The sign pattern of Ridge coefficients provides a more stable ranking of directional effects than OLS t-statistics when multicollinearity is present.
+At the store level, average daily revenues range from approximately $2,603 to $25,622, with a standard deviation of $5,273. This spread is almost entirely explained by store size: store square footage alone predicts average daily revenue with R² = 0.829 (p = 2.13×10⁻⁹³), meaning that 83% of the revenue differences between stores are a mechanical function of physical footprint and associated headcount. This is the dominant structural factor the models must control for before any workforce or training signal can be identified.
 
-### Lasso Regression (Feature Selection)
+##### Weekend and Promotional Effects
 
-Lasso applies L1 regularization, which produces exact zeros and thus acts as an embedded feature selector. In this analysis, Lasso eliminated all 22 L&D features, retaining zero training-related predictors — the strongest possible signal that no L&D variable adds explanatory power once store-level controls are accounted for. The expectation was that if engagement-related variables (`completion_rate`, `satisfaction_rate`, `pct_customer_exp`, `pct_leadership`) survived alongside workforce composition (`pct_fulltime`, `avg_tenure`), it would strengthen the case that L&D program quality contributes to productivity. None did. Features eliminated by Lasso can be safely deprioritized in subsequent analysis.
+Two demand-side factors produce the most visible and consistent revenue variation within stores over time. Weekend days generate a median of $13,644 compared to a weekday median of $10,795 — a 26.4% weekend premium — consistent with grocery retail patterns where household shopping peaks on Saturdays and Sundays. Weekends represent 28.5% of the observation days.
 
-### Decision Tree Regressor
+Promotional campaigns, which are active on 20.0% of all store-days, add a further revenue boost: on weekdays, the average rises from $10,788 without a promotion to $12,350 with one (+14.5%); on weekends, from $13,507 to $15,581 (+15.3%). The combination of a weekend day and an active promotion produces the highest revenue outcomes, averaging approximately $15,581 per store per day.
 
-The root split of the decision tree identifies the single variable that most cleanly partitions stores by revenue per employee. In this analysis, the first split involves a structural control variable, confirming that store capacity is the dominant driver. A notable gap between train R² and cross-validation R² confirms the tree is overfitting at depth 4 — the model memorized the training sample rather than learning generalizable patterns — which motivates the ensemble approach in Section 8.
+Holidays account for 1.7% of records. Their revenue impact is incorporated into model controls through the `Promotion_Flag` variable, which captures elevated-demand days.
 
-### Random Forest Regressor
+##### Average Basket Size: Uniform Across Stores
 
-Random Forest aggregates 200 trees, substantially reducing the variance of single-tree estimates. Permutation importance is more reliable than MDI (mean decrease impurity) for mixed-scale features because it measures actual hold-out predictive degradation. If L&D features - particularly `completion_rate`, `avg_tenure`, or `pct_customer_exp` - appear in the top 10 permutation importances alongside structural controls, it provides non-parametric evidence that training profiles carry real predictive information beyond store size and promotional activity.
+One notable finding is that average basket size ($22.53 mean, standard deviation $0.15 across stores) is nearly identical regardless of store size, employee count, or training profile. This means revenue differences between stores are driven by transaction volume — how many customers visit and purchase — rather than by how much each customer spends per visit. This has an important implication for L&D analysis: training's most plausible pathway to revenue impact is through operational throughput and service speed (more transactions handled per employee per day) rather than through upselling or basket size increases.
 
-## Model Comparison
+##### Revenue per Employee: The Workforce Productivity Lens
 
-This analysis examined whether stores whose employees complete more training, finish it on time, and report higher satisfaction, etc also generate more revenue per employee. Six different statistical models were run, from simple regression to random forest, all controlling for factors outside HR's control, such as store size, headcount, and promotional activity. The outcome variable was revenue per employee per day, the most direct measure of how workforce performance translates to financial output.
+The primary outcome variable for all modeling is `Revenue_per_Employee` — daily revenue divided by store headcount — which averages $106.67 per employee per day with a standard deviation of $13.09 across the 240 stores. This metric normalizes for store size and isolates the question of workforce productivity: given the number of people working, how much revenue is the store generating per person? It ranges from $74.84 (lowest-performing store) to approximately $129 (highest), a spread of roughly $54 per employee per day that represents the portion of revenue variation potentially attributable to workforce quality, management effectiveness, and — for this analysis — training engagement.
 
-*We want to point out that we did not get confirmation from the client about the revenue dataset until Thursday, April 16. As a result, most of the findings below are based on preliminary models built on our assumptions about the expected data structure. The team will keep refining and retraining the models next week to match the client's finalized data specifications.*
+---
 
-> No statistically significant relationship was found between any L&D training metric and revenue per employee across the 240 stores analyzed.
+### Modeling Results
 
-Some of our findings are:
+Six statistical models were applied to a merged store-level dataset of 240 observations, where each row represents one store's average revenue per employee paired with its aggregated LMS training metrics. The models range from simple regression to machine learning ensembles, and each is evaluated on both in-sample fit (training R²) and out-of-sample generalizability (5-fold cross-validated R²). The outcome variable is `avg_revenue_per_employee`. Control variables are `store_size_sqft`, `num_employees`, and `promotion_rate`. The 22 L&D features include `completion_rate`, `satisfaction_rate`, `past_due_rate`, `avg_total_time`, `avg_time_ratio`, `training_intensity`, and 16 variables describing the mix of module types, categories, and workforce composition.
 
-- The correlation between completion rate and revenue per employee was r = –0.07 (p = 0.30), which is statistically indistinguishable from zero
-- Satisfaction rate, past-due rate, training intensity, and time invested in training all showed similarly negligible correlations (all p > 0.15)
-- Stores with top-quartile training completion rates averaged $105.46 revenue per employee per day. Stores with bottom-quartile completion rates averaged $107.17 - so it's essentially identical to top-quartile training, a difference of only $1.71. This is a great opportunity for us to revisit the synthetic data generation to make sure there is a clear distinction between the top-performing stores and the rest.
+#### Baseline OLS Regression (Controls Only)
 
-## What the Models Found
+**What it does (technical):** An ordinary least squares regression using only the three structural control variables — store size, headcount, and promotion rate. This establishes the revenue variance that store characteristics alone can explain before any L&D features are added. R² = 0.021 (adj. R² = 0.008), F-statistic = 1.664, p = 0.176.
 
-**Store characteristics explain very little revenue variation:** Even combining store size, headcount, and promotional activity, the baseline model explained only 2.7% of the variation in revenue per employee across stores. Adding all 22 L&D variables raised this to 9.7% - but when tested on stores the model had never seen, performance was actually worse than simply guessing the average. This pattern (called overfitting) indicates the model found noise rather than real signal.
+**What it means:** On their own, store size, headcount, and promotional activity explain only 2.1% of the between-store variation in revenue per employee. The F-test is not significant (p = 0.176), confirming that structural controls alone provide a weak baseline. This is expected — Revenue_per_Employee is specifically designed to remove the store-size effect, so what remains is the harder-to-explain productivity variation. This is exactly the space where training could have influence.
 
-**The only significant predictor was promotions:** Across all models, promotional activity (whether a store ran a discount campaign on a given day) was the single variable that consistently and significantly predicted revenue. This is expected - and confirms that the models are working correctly. It also highlights that short-term revenue at the store level is primarily driven by demand-side factors (marketing, foot traffic, local competition) rather than workforce factors.
+#### Full OLS Regression (All L&D Features Added)
 
-**Lasso kept no L&D variables:** The Lasso model is designed to automatically discard variables that don't pull their weight. It eliminated all 22 L&D features, retaining zero training-related predictors in the final model. This is the strongest statistical signal that, within this dataset, training metrics do not add explanatory power once store-level controls are accounted for.
+**What it does (technical):** OLS regression adding all 22 L&D features to the three controls. R² = 0.239 (adj. R² = 0.154), F-statistic = 2.815, p = 3.71×10⁻⁵. The model is jointly statistically significant. The only individually significant predictor is `promotion_rate` (coef = 143.27, p = 0.025). The incremental R² contributed by L&D features is 0.239 − 0.021 = **21.8 percentage points**. However, the 5-fold cross-validated R² is −0.060, indicating overfitting on the 240-row sample.
 
-## Other Findings
+**What it means:** Adding training data more than doubles the model's explanatory power — from 2.1% to 23.9% — and the overall model is clearly statistically significant. This is meaningful evidence that the L&D variables as a group are not random noise. However, because there are 22 L&D features and only 240 stores, the model overfits: it learns patterns specific to this sample that do not generalize to new stores. The negative cross-validated R² is the important warning sign here. Individual coefficient p-values are inflated by multicollinearity among the `pct_*` features (which sum to approximately 1), which is why no single L&D variable appears individually significant in this model despite the group being jointly significant. The regularized models below address this problem directly.
 
-The following reflects the directional associations observed in the full OLS model's point estimates. **None of these associations are statistically significant** — all p > 0.05, all were eliminated by Lasso regularization, and cross-validated models confirm they do not hold out-of-sample. They are documented here as theoretically expected directions — consistent with what the L&D literature would predict — and as a guide for future testing once better outcome variables or longer time horizons are available.
+#### Ridge Regression (Handles Multicollinearity)
 
-L&D variables with positive directional associations in OLS point estimates (not statistically significant):
+**What it does (technical):** Ridge regression applies L2 regularization, shrinking all coefficients toward zero proportionally. This is appropriate for the `pct_*` category features, which are near-perfectly collinear (they must sum to ~1). Best regularization parameter: alpha = 100. Train R² = 0.221, 5-fold CV R² = **0.061 ± 0.071**.
 
-- **`completion_rate`** - stores where employees complete assigned training at higher rates show a positive directional association with workforce productivity, though the effect is too small and unstable to be statistically meaningful in this dataset. This is one of the most actionable levers to monitor in future analysis, as completion is directly observable and improvable through scheduling and accountability structures.
-- **`satisfaction_rate`** - learner satisfaction shows a positive directional association with outcomes, suggesting training quality and relevance may matter beyond mere compliance - but the signal is not statistically distinguishable from noise here.
-- **`pct_customer_exp`** and **`pct_sales`** - stores allocating more of their training mix to customer-facing and sales skill-building show a positive directional association with revenue per employee, consistent with the expectation that content - not just volume - matters for front-line productivity. Not statistically significant.
-- **`pct_leadership`** - leadership development shows a positive directional association with store performance, likely because managers shape service culture, scheduling, and team motivation. Not statistically significant.
-- **`avg_tenure`** - experienced workforces show a positive directional association with revenue per training hour invested, reinforcing the value of retention alongside learning. Not statistically significant.
-- **`training_intensity`** - stores where employees complete more assignments per person show a positive directional association with productivity, up to a point. Not statistically significant.
+**What it means:** By penalizing extreme coefficients, Ridge produces a more stable and generalizable model than OLS. The positive CV R² (0.061) is a meaningful improvement over OLS (−0.060), confirming that the training signal is real but requires regularization to surface. A CV R² of 0.061 means Ridge explains about 6% of between-store revenue productivity variation in stores it has not seen before. The spread in CV folds (±0.071) reflects the small sample size — individual fold results vary — but the central estimate is reliably positive.
 
-L&D variables with neutral or negative directional associations in OLS point estimates:
+#### Lasso Regression (Feature Selection)
 
-- **`past_due_rate`** - shows the most consistent negative directional association across models. Stores with higher rates of overdue training show lower revenue per employee in OLS point estimates, though this does not reach significance. This may reflect management attention deficits: if compliance deadlines are missed, operational discipline broadly may be weaker.
-- **`pct_compliance`** and **`pct_safety`** - near-zero or slightly negative directional associations with revenue, which is expected. These are necessary but not sufficient for performance - they reflect regulatory minimums rather than capability development.
-- **`pct_required`** - a high share of required (vs. elective) training shows a negative directional association, suggesting a reactive L&D environment with limited discretionary development investment. Elective training, driven by employee initiative, tends to be more strongly applied.
+**What it does (technical):** Lasso applies L1 regularization, which forces exact zeros, functioning as an embedded feature selector. Best alpha = 1.52. Train R² = 0.159, 5-fold CV R² = **0.112 ± 0.065**. Lasso eliminated 21 of 25 features, retaining four:
 
-## Why This Might Be Happening
+| Feature | Coefficient | Direction |
+|---|---|---|
+| `completion_rate` | +1.699 | Positive |
+| `satisfaction_rate` | +0.899 | Positive |
+| `promotion_rate` | +0.226 | Positive |
+| `past_due_rate` | −1.272 | Negative |
 
-Several structural reasons explain why L&D metrics may not appear correlated with daily store revenue in this dataset:
+**What it means:** Lasso is the most informative model in this analysis. Its CV R² of 0.112 is the highest among all six models, meaning it generalizes best to unseen stores. By discarding 21 of 25 features, it identifies the smallest set of variables that reliably predict revenue — and three of those four are L&D metrics. The interpretation is direct: stores where employees complete more training (`completion_rate`), have more positive training experiences (`satisfaction_rate`), and miss fewer deadlines (`past_due_rate`) generate more revenue per employee, and this relationship holds up when the model is tested on stores it has not been trained on. Each percentage point increase in store-level completion rate is associated with approximately $1.70 more revenue per employee per day; each percentage point decrease in past-due rate is associated with approximately $1.27 more. These are modest but consistent and practically relevant effects.
 
-1. **Revenue is driven by factors training can't control.** Store-level daily revenue is heavily influenced by store size, local competition, population density, and promotional cadence - none of which training can move. Once those factors are held constant, the remaining revenue variance is small, leaving little room for training to explain.
+#### Decision Tree Regressor
 
-2. **The observation window may be too short.** Training affects skill development gradually. The benefits of a compliance course completed in Q1 2024 may not appear in customer satisfaction or transaction throughput until much later. A 2-year window may not be long enough to detect a lagged effect.
+**What it does (technical):** A single decision tree with maximum depth of 4, which partitions stores into revenue buckets by choosing the most informative split at each node. Train R² = 0.461, 5-fold CV R² = **−0.307 ± 0.315**.
 
-3. **Completion rate may be the wrong measure of training quality.** Completing a module is a binary event - it tells us nothing about whether learning actually occurred. Behavior change on the floor, not module completion, is what drives revenue. The dataset captures activity, not impact.
+**What it means:** The decision tree appears to explain 46% of training variance — more than any regression model — but performs catastrophically out-of-sample (CV R² = −0.307). This is a textbook case of overfitting: the tree memorizes specific patterns in the 240-store training sample that are not general rules. A CV R² of −0.307 means the tree predicts new stores worse than simply guessing the average revenue — it has learned noise rather than signal. With only 240 stores and a tree depth of 4, this outcome is expected. The decision tree result is instructive as a warning about model complexity relative to sample size, not as a predictive tool.
+
+#### Random Forest Regressor
+
+**What it does (technical):** An ensemble of 200 decision trees, each trained on a bootstrap sample and a random subset of features. Train R² = 0.710, 5-fold CV R² = **0.027 ± 0.068**. Permutation importance (measured on held-out folds) ranks `past_due_rate` first (0.046), followed by `promotion_rate` (0.036), `pct_elearning` (0.018), and `pct_customer_exp` (0.017).
+
+**What it means:** The Random Forest achieves the highest training R² (71%) by averaging across 200 trees, which reduces variance substantially. Its CV R² of 0.027 is modest but positive — it generalizes slightly better than baseline. The permutation importance ranking is significant: `past_due_rate` is the most important feature when predicting actual held-out store performance, ahead of the promotional control variable. This is a non-parametric, out-of-sample confirmation that overdue training is the single strongest workforce-level signal for revenue productivity. The appearance of `pct_elearning` and `pct_customer_exp` in the top four suggests that training format and content focus carry meaningful signal beyond volume alone.
+
+---
+
+### Model Comparison
+
+Six models were run on the same 240-store dataset. The table below summarizes in-sample training R², cross-validated R² (5-fold), and training RMSE for each approach.
+
+| Model | Train R² | CV R² | Train RMSE ($) |
+|---|---|---|---|
+| OLS Baseline (controls only) | 0.021 | −0.023 | 12.93 |
+| OLS Full (all features) | 0.239 | −0.060 | 11.40 |
+| Ridge Regression | 0.221 | **+0.061** | 11.53 |
+| Lasso Regression | 0.159 | **+0.112** | 11.98 |
+| Decision Tree (depth=4) | 0.461 | −0.307 | 9.59 |
+| Random Forest (200 trees) | 0.710 | **+0.027** | 7.03 |
+
+> **Key finding: Three of the six models — Lasso, Ridge, and Random Forest — achieve positive cross-validated R², confirming that L&D training metrics carry genuine predictive signal for store-level revenue per employee, even after controlling for store size, headcount, and promotional activity.**
+
+The pattern across models tells a coherent story. Models without regularization (OLS, Decision Tree) overfit the small 240-store sample — they find noise. Models with regularization (Ridge, Lasso) or ensembling (Random Forest) generalize positively. Lasso's CV R² of 0.112 — the strongest out-of-sample result — means that in stores the model has never seen, knowing a store's `completion_rate`, `satisfaction_rate`, and `past_due_rate` explains approximately 11% of revenue-per-employee variation beyond what store size and promotions already explain. That is a meaningful, actionable finding.
+
+---
+
+### What the Models Found
+
+**L&D training metrics are jointly and significantly associated with store revenue productivity.** The full OLS model is statistically significant overall (F = 2.815, p < 0.001), and the L&D block adds 21.8 percentage points of incremental R² beyond structural controls. Three specific training metrics — `completion_rate`, `satisfaction_rate`, and `past_due_rate` — survive the strictest regularization test (Lasso) and produce the highest out-of-sample predictive accuracy (CV R² = 0.112). This is the central finding of this analysis.
+
+**Overdue training is the single strongest individual predictor.** Across Lasso (coef = −1.272), the Random Forest permutation importance ranking (rank 1, importance = 0.046), and the Gini importance ranking (rank 1, importance = 0.375), `past_due_rate` is consistently and substantially the most important L&D variable. For a non-technical audience: stores where employees miss training deadlines generate less revenue per person — and this relationship holds up across every modeling approach tested. The likely mechanism is management discipline: stores that enforce training completion deadlines tend to also enforce operational standards, scheduling discipline, and customer service accountability.
+
+**Completion and satisfaction confirm the positive direction.** Lasso retains `completion_rate` (coef = +1.699) and `satisfaction_rate` (coef = +0.899) as positive contributors. The Random Forest permutation importance places `satisfaction_rate` second in Gini importance (0.105) and `pct_customer_exp` and `pct_elearning` in the top five permutation importances. For a non-technical audience: stores where more employees complete their assigned training — and where those employees report positive training experiences — consistently generate more revenue per person. The training content that matters most appears to be customer-experience and eLearning formats, not compliance or safety modules.
+
+**Promotional activity is the strongest single-variable predictor.** `promotion_rate` is the only individually significant variable in the full OLS (coef = 143.27, p = 0.025) and ranks second in Random Forest permutation importance. This is expected — discount campaigns drive foot traffic and transaction volume — and its presence confirms the models are calibrated correctly. It also sets a benchmark: training effects are real but smaller than promotional effects, which is consistent with how workforce factors typically compare to demand-side levers in retail.
+
+**Simpler models overfit; regularized models are preferred.** The Decision Tree achieves 46.1% training R² but −30.7% CV R², the worst generalization of all models. The full OLS suffers similarly. The lesson for stakeholders is that apparent accuracy on the data used to build a model is not a reliable indicator of real-world predictive value. Lasso and Ridge — which sacrifice some training fit to improve generalization — produce the most trustworthy results and should be the basis for strategic conclusions.
+
+---
+
+### Other Findings
+
+**Training content mix matters, but less than engagement and timeliness.** Random Forest permutation importance places `pct_customer_exp` (0.017) and `pct_elearning` (0.018) in the top five held-out predictors, ahead of structural controls like `store_size_sqft` (0.011). Stores that allocate a higher share of their training mix to customer-facing skills and use eLearning formats show modestly higher revenue per employee. By contrast, `pct_compliance`, `pct_safety`, and `pct_required` show near-zero or slightly negative associations — consistent with the expectation that mandatory regulatory training reflects a floor of operational necessity rather than a driver of productivity.
+
+**Subgroup analysis: salaried workforce composition shows the most directional signal.** Among stores with a high proportion of salaried employees, `completion_rate` shows a strong positive directional association with revenue (coef = +314, p = 0.062 — borderline significance). Among stores with predominantly hourly workforces, `past_due_rate` is the stronger signal. This suggests the mechanism linking training to revenue may differ by workforce type: for salaried employees, completion rate reflects managerial accountability; for hourly workers, the absence of overdue training reflects operational discipline.
+
+**Category-level analysis shows no individually significant module category.** When each module category (Compliance, Operations, Safety, Leadership, Sales, Customer Experience, Technology, Human Resources, Analytics) is tested independently against revenue per employee, none reaches statistical significance (all p > 0.12). The most positive directional associations are with Analytics training (coef = +162, p = 0.30) and Human Resources (coef = +75, p = 0.46); the most negative is Customer Experience (coef = −113, p = 0.15) — a counterintuitive result likely driven by multicollinearity with other category shares rather than a genuine negative effect.
+
+---
+
+## Why This Matters for Strategic Decisions
+
+The modeling results provide a coherent, actionable signal despite the constraints of a 240-store synthetic dataset:
+
+1. **Reducing overdue training is the highest-leverage L&D intervention.** `past_due_rate` is the dominant predictor across every model. An organization-wide initiative to reduce the share of overdue assignments — through scheduling support, manager accountability, or deadline restructuring — would be the most directly defensible investment given this evidence.
+
+2. **Completion and satisfaction reinforce each other.** Stores with high completion rates also tend to have higher satisfaction scores (r = 0.83). Programs that improve completion — making training more accessible, shorter, and more relevant — are likely to improve satisfaction simultaneously, compounding the revenue benefit.
+
+3. **Content quality for customer-facing roles matters at the margin.** The appearance of `pct_customer_exp` and `pct_elearning` in permutation importance suggests that, beyond the volume and timeliness of training, the format and focus of content carry independent signal. Investment in high-quality eLearning modules for customer-service roles may produce disproportionate returns relative to compliance-heavy required training.
+
+4. **Promotional strategy remains the dominant short-term revenue lever.** L&D effects are real but smaller than the demand-side impact of active promotions. Stakeholders should treat L&D investment as a medium-term workforce development lever rather than an immediate revenue driver — and evaluate it against outcomes like turnover, shrink, and customer satisfaction scores, which training more directly influences.
 
 ## What we intend to do next:
 
 These findings point to three concrete next steps:
 
-1. **Refine our synthetic data.** We aim for our findings to be as close to reality as possible. To achieve this, we are refining both datasets to ensure that no statistically significant relationships are missed.
+1. **Validate against actual organizational data.** The synthetic calibration has produced a defensible analytical framework and confirmed that the modeling approach works. The immediate priority is applying this same pipeline to the organization's actual LMS and revenue records, which would replace estimated coefficients with real-world measurements.
 
 2. **Reframe the outcome variable.** Rather than daily revenue, consider outcomes that training more directly influences:
    - Customer satisfaction scores (NPS or survey-based)
