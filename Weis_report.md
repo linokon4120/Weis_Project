@@ -72,13 +72,22 @@ Independent variables were derived from the LMS dataset and organized into three
 - **Training Intensity:** Time Investment Ratio, calculated as Total Time / Estimated Duration and reflecting actual versus expected effort per module, average number of modules assigned per employee, and proportion of optional versus mandatory training completed.
 - **Program Composition:** Distribution of training activity across module types, module categories, departments, and employee classifications within each store.
 
-The dependent variable is store-level revenue performance, represented primarily by Daily Revenue and the derived productivity metrics Revenue per Employee and Transactions per Employee from the revenue dataset, as described in the Data section above.
+The dependent variable for all modeling is `Revenue per Employee` — daily store revenue divided by the number of employees on shift — aggregated to a single store-level mean across the analysis period. This metric normalizes for store size and isolates workforce productivity, which is the dimension most directly linkable to training quality. It averages $106.67 per employee per day with a standard deviation of $13.09 across the 240 stores, ranging from $74.84 to approximately $129.
 
 ### Statistical Analysis
 
 The analysis used a combination of Microsoft Excel, Python, and Tableau. Excel handled initial data cleaning, aggregation, and exploratory summaries. Python supported more detailed statistical modeling and visualization. Tableau facilitated data exploration and the creation of clearer, more accessible visualizations for stakeholder presentation.
 
-The analysis took place in two phases. The first phase used correlation analysis to identify which individual L&D variables were significantly associated with revenue performance. The second phase applied multiple modeling approaches - including regression analysis and decision trees - to examine the overall relationship between L&D variables and revenue while accounting for store-level factors that might independently influence performance, such as store size, district, workforce composition, and the Promotion Flag control variable from the revenue dataset. This allowed for a more precise estimate of the incremental contribution of specific training elements. Subgroup analyses were also conducted across departments, employee classifications, and module categories to examine whether the relationship between training and revenue varied by workforce segment or program type.
+The analysis took place in two phases. The first phase used correlation analysis to identify which individual L&D variables were significantly associated with revenue performance. The second phase applied six modeling approaches to the merged 240-store dataset to estimate the incremental contribution of L&D features beyond structural controls (store size, headcount, and promotion rate):
+
+1. **OLS Baseline** — controls only, to establish the variance explained by store structure alone.
+2. **OLS Full** — all 22 L&D features added, to quantify the joint explanatory contribution of training metrics.
+3. **Ridge Regression** — L2-regularized OLS to address multicollinearity among correlated training features.
+4. **Lasso Regression** — L1-regularized OLS that eliminates irrelevant features by forcing their coefficients to exactly zero, functioning as an embedded feature selector.
+5. **Decision Tree** — a non-linear model (max depth = 4) to detect threshold-based patterns.
+6. **Random Forest** — an ensemble of 200 decision trees to reduce variance and produce robust feature importance rankings.
+
+All models were evaluated using 5-fold cross-validated R² as the primary performance metric, which measures generalizability to unseen stores rather than in-sample fit. Subgroup analyses were also conducted across employment classifications and workforce composition segments to examine whether the training–revenue relationship varies by store type.
 
 ### Interpretation and Limitations
 
@@ -87,6 +96,8 @@ Findings were interpreted in the context of the organization's strategic L&D goa
 First, this analysis establishes correlation rather than causation. Statistically significant associations inform investment prioritization but do not definitively prove that improved training resource allocation will directly drive revenue. External factors - including local market conditions, store tenure, and labor market stability - may independently influence both variables.
 
 Second, because both datasets are synthetically generated, findings should be understood as illustrative of the analytical framework rather than conclusive. This framing applies equally to the results and conclusions that follow: All findings represent the output of a methodologically sound analytical approach applied to synthetic data, and validation against the organization's actual proprietary records would be required before these results are used to inform strategic decisions.
+
+Third, all model evaluation relies on 5-fold cross-validation rather than a dedicated held-out test set. With only 240 store-level observations, reserving a separate test set (e.g., 20%, or ~48 stores) would leave too few samples for stable cross-validation on the training portion, making the reported CV R² estimates unreliable. The 5-fold CV approach is the appropriate methodological tradeoff at this sample size. When the analysis is replicated on actual organizational data — which may span a longer time horizon or additional store-level variables — a formal 80/20 train/test split with nested cross-validation on the training fold is recommended to produce fully independent held-out performance estimates.
 
 ## Results
 
@@ -213,6 +224,8 @@ Six models were run on the same 240-store dataset. The table below summarizes in
 > **Key finding: Three of the six models — Lasso, Ridge, and Random Forest — achieve positive cross-validated R², confirming that L&D training metrics carry genuine predictive signal for store-level revenue per employee, even after controlling for store size, headcount, and promotional activity.**
 
 The pattern across models tells a coherent story. Models without regularization (OLS, Decision Tree) overfit the small 240-store sample — they find noise. Models with regularization (Ridge, Lasso) or ensembling (Random Forest) generalize positively. Lasso's CV R² of 0.112 — the strongest out-of-sample result — means that in stores the model has never seen, knowing a store's `completion_rate`, `satisfaction_rate`, and `past_due_rate` explains approximately 11% of revenue-per-employee variation beyond what store size and promotions already explain. That is a meaningful, actionable finding.
+
+> **Note on evaluation design:** All CV R² scores above are estimated using 5-fold cross-validation on the full 240-store dataset — there is no separate held-out test set. This is a deliberate tradeoff: with only 240 observations, holding out 20% (~48 stores) would destabilize the remaining folds and produce higher-variance estimates than the full-data CV. The CV R² figures are therefore the best available unbiased estimates of generalization performance at this sample size. When this pipeline is applied to actual organizational data, a formal train/test split with nested CV is recommended.
 
 ---
 
